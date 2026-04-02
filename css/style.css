@@ -1,0 +1,482 @@
+/* - reset & base - */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body, #app {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    background: #0d1117;
+    color: #e6edf3;
+}
+
+/* - layout shell - */
+#app {
+    display: flex;
+    flex-direction: column;
+}
+
+#main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* - topbar - */
+#topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0 16px;
+    background: #161b22;
+    border-bottom: 0.5px solid #30363d;
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+#logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #e6edf3;
+    letter-spacing: 0.04em;
+}
+
+#nav-pills {
+    display: flex;
+    gap: 4px;
+}
+
+.pill {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 0.5px solid #30363d;
+    background: transparent;
+    color: #8b949e;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pill:hover {
+    border-color: #58a6ff;
+    color: #58a6ff;
+}
+
+.pill-active {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #fff;
+}
+
+#topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+}
+
+#status-text {
+    font-size: 11px;
+    color: #22c55e;
+}
+
+#clock {
+    font-size: 11px;
+    color: #8b949e;
+    font-variant-numeric: tabular-nums;
+}
+
+/* - sidebar - */
+#sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: #161b22;
+    border-right: 0.5px solid #30363d;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* - right panel - */
+#right-panel {
+    width: 240px;
+    flex-shrink: 0;
+    background: #161b22;
+    border-left: 0.5px solid #30363d;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* - shared section styles */
+.section {
+    padding: 12px 14px;
+    border-bottom: 0.5px solid #30363d;
+}
+
+.section-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+}
+
+.loading-msg {
+    font-size: 11px;
+    color: #484f58;
+    font-style: italic;
+}
+
+/* - alert items - */
+.alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 0.5px solid #21262d;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.alert-item:last-child {
+    border-bottom: none;
+}
+
+.alert-badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.badge-tor { background: #7f1d1d; color: #fca5a5; }
+.badge-svr { background: #78350f; color: #fcd34d; }
+.badge-ffw { background: #14532d; color: #86efac; }
+.badge-sct { background: #1e3a5f; color: #93c5fd; }
+.badge-default { background: #21262d; color: #8b949e; }
+
+.alert-text {
+    font-size: 11px;
+    color: #c9d1d9;
+    line-height: 1.4;
+}
+
+.alert-meta {
+    font-size: 10px;
+    color: #8b949e;
+    margin-top: 2px;
+}
+
+/* - cell items - */
+.cell-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 0.5px solid #21262d;
+}
+
+.cell-item:last-child { border-bottom: none; }
+
+.cell-name {
+    font-size: 12px;
+    color: #e6edf3;
+    font-weight: 500;
+}
+
+.cell-detail {
+    font-size: 10px;
+    color: #8b949e;
+    margin-top: 1px;
+}
+
+.cell-strength {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.str-tor { background: #7f1d1d; color: #fca5a5; }
+.str-svr { background: #78350f; color: #fcd34d; }
+.str-obs { background: #14532d; color: #86efac; }
+
+/* - metric cards - */
+.metric-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.metric-card {
+    background: #0d1117;
+    border: 0.5px solid #30363d;
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+
+.metric-val {
+    font-size: 20px;
+    font-weight: 500;
+    color: #e6edf3;
+    line-height: 1;
+}
+
+.metric-unit {
+    font-size: 11px;
+    color: #8b949e;
+}
+
+.metric-lbl {
+    font-size: 10px;
+    color: #8b949e;
+    margin-top: 4px;
+}
+
+/* - instability rows - */
+.instab-row {
+    margin-bottom: 10px;
+}
+
+.instab-row:last-child { margin-bottom: 0; }
+
+.instab-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.instab-name {
+    font-size: 11px;
+    color: #8b949e;
+}
+
+.instab-val {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.instab-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: #21262d;
+    overflow: hidden;
+}
+
+.instab-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444);
+    transition: width 0.4s ease;
+}
+
+/* - spotter reports - */
+.spotter-item {
+    padding: 5px 0;
+    border-bottom: 0.5px solid #21262d;
+    font-size: 11px;
+    color: #c9d1d9;
+    line-height: 1.5;
+}
+
+.spotter-item:last-child { border-bottom: none; }
+
+.spotter-time {
+    font-weight: 500;
+    margin-right: 4px;
+}
+
+.spotter-time.tor { color: #fca5a5; }
+.spotter-time.svr { color: #fcd34d; }
+.spotter-time.info { color:#86efac; }
+
+/* - map - */
+#map-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    background: #1a2332;
+}
+
+.leaflet-container {
+    background: #1a2332 !important;
+}
+
+/* - overlay toggles - */
+#overlay-toggles {
+    position: absolute;
+    bottom: 28px;
+    left: 12px;
+    display: flex;
+    gap: 6px;
+    z-index: 500;
+}
+
+.overlay-pill {
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 12px;
+    border: 0.5px solid #30363d;
+    background: rgba(22, 27, 34, 0.92);
+    color: #8b949e;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    backdrop-filter: blur(4px);
+}
+
+.overlay-pill:hover {
+    border-color: #58a6ff;
+    color: #58a6ff;
+}
+
+.overlay-pill.active {
+    border-color: #1d4ed8;
+    color: #93c5fd;
+    background: rgba(29, 78, 216, 0.18);
+}
+
+/* - timeline - */
+#timeline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: #0d1117;
+    border-top: 0.5px solid #30363d;
+    flex-shrink: 0;
+    height: 36px;
+}
+
+.tl-label {
+    font-size: 10px;
+    color: #8b949e;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+#tl-track {
+    flex: 1;
+    height: 4px;
+    background: #21262d;
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+}
+
+#tl-fill {
+    height: 100%;
+    width: 0%;
+    background: #1d4ed8;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+#tl-thumb {
+    position: absolute;
+    top: -4px;
+    left: 0%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: 2px solid #93c5fd;
+    transform: translateX(-50%);
+    transition: left 0.3s ease;
+}
+
+/* - leaflet overrides - */
+.leaflet-control-zoom {
+    border: 0.5px solid #30363d !important;
+    border-radius: 6px !important;
+}
+
+.leaflet-control-zoom a {
+    background: #161b22 !important;
+    color: #8b949e !important;
+    border-bottom: 0.5px solid #30363d !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background: #1c2128 !important;
+    color: #e6edf3 !important;
+}
+
+.leaflet-control-attribution {
+    background: rgba(13, 17, 23, 0.8) !important;
+    color: #484f58 !important;
+    font-size: 9px !important;
+}
+
+.leaflet-control-attribution a {
+    color: #58a6ff !important;
+}
+
+/* - scrollbar styling - */
+#sidebar::-webkit-scrollbar, #right-panel::-webkit-scrollbar {
+    width: 4px;
+}
+
+#sidebar::-webkit-scrollbar-track, #right-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#sidebar::-webkit-scrollbar-thumb, #right-panel::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 2px;
+}
+
+/* Leaflet Tooltip Override */
+.vortex-tooltip {
+    background: #161b22 !important;
+    border: 0.5px solid #30363d !important;
+    border-radius: 6px !important;
+    color: #c9d1d9 !important;
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+    box-shadow: none !important;
+}
+
+.vortex-tooltip strong {
+    color: #e6edf3;
+    font-weight: 500;
+}
+
+.leaflet-tooltip-top:before, .leaflet-tooltip-bottom:before, .leaflet-tooltip-left:before, .leaflet-tooltip-right:before {
+    display: none !important;
+}
+
+/* PDS Tag */
+.pds-tag { 
+    font-size: 10px;
+    font-weight: 500;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: #751d1d;
+    color: #fca5a5;
+    margin-right: 3px;
+}
+
