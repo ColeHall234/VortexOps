@@ -8,7 +8,15 @@ const AlertState = {
 //Init
 function initAlerts() {
     fetchAlerts();
+    const center = CONFIG.map.center;
+    fetchConditions(center[0], center[1]);
+
     AlertState.refreshTimer = setInterval(fetchAlerts, CONFIG.alerts.refreshInterval);
+    setInterval(() => {
+        const c = MapState.map.getCenter();
+        fetchConditions(c.lat, c.lng);
+    }, 300000);
+
     console.log('[VortexOps] Alert polling started');
 }
 //Alert Priority
@@ -18,36 +26,36 @@ function getAlertPriority(eventName) {
 }
 //NWS Fetch
 async function fetchAlerts() {
-  try {
-    let url = CONFIG.alerts.baseUrl;
+    try {
+        let url = CONFIG.alerts.baseUrl;
 
-    if (CONFIG.alerts.area) {
-      url += `?area=${CONFIG.alerts.area}`;
+        if (CONFIG.alerts.area) {
+            url += `?area=${CONFIG.alerts.area}`;
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+        const data = await res.json();
+        const alerts = data.features || [];
+
+        alerts.sort((a, b) => {
+            const ap = getAlertPriority(a.properties.event);
+            const bp = getAlertPriority(b.properties.event);
+            return ap - bp;
+        });
+
+        AlertState.lastAlerts = alerts;
+        renderAlertsSidebar(alerts);
+        drawWarningPolygons(alerts);
+        updateStatusIndicator(alerts);
+
+        console.log(`[VortexOps] ${alerts.length} alerts loaded`);
+
+    } catch (err) {
+        console.error('[VortexOps] Alert Fetch Failed', err);
+        renderAlertsError();
     }
-
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Server error: ${res.status}`);
-
-    const data = await res.json();
-    const alerts = data.features || [];
-
-    alerts.sort((a, b) => {
-      const ap = getAlertPriority(a.properties.event);
-      const bp = getAlertPriority(b.properties.event);
-      return ap - bp;
-    });
-
-    AlertState.lastAlerts = alerts;
-    renderAlertsSidebar(alerts);
-    drawWarningPolygons(alerts);
-    updateStatusIndicator(alerts);
-
-    console.log(`[VortexOps] ${alerts.length} alerts loaded`);
-
-  } catch (err) {
-    console.error('[VortexOps] Alert Fetch Failed', err);
-    renderAlertsError();
-  }
 }
 
 //Render Sidebar
@@ -147,7 +155,7 @@ function updateStatusIndicator(alerts) {
     const dot = document.getElementById('status-dot');
     const text = document.getElementById('status-text');
 
-    const hasTornado = alerts.some(a => 
+    const hasTornado = alerts.some(a =>
         a.properties.event?.includes('Tornado Warning')
     );
     const hasSevere = alerts.some(a =>
@@ -173,6 +181,97 @@ function updateStatusIndicator(alerts) {
 function truncate(str, maxLen) {
     if (!str) return '';
     return str.length > maxLen ? str.slice(0, maxLen) + '...' : str;
+}
+
+//Surface Conditions
+async function fetchConditions(lat, lng) {
+    const inUS = (lat >= 24.5 && lat <= 49.5 && lng >= -125 && lng <= -66.5)
+        || (lat >= 51 && lat <= 71 && lng >= -180 && lng <= -129)   // Alaska
+        || (lat >= 18.5 && lat <= 22.5 && lng >= -160 && lng <= -154); // Hawaii
+
+    if (!inUS) {
+        console.log('[VortexOps] Outside NWS coverage area — skipping conditions fetch');
+        document.getElementById('m-temp').textContent = '--°';
+        document.getElementById('m-dew').textContent = '--°';
+        document.getElementById('m-wspd').innerHTML = '--<span class="metric-unit">kt</span>';
+        document.getElementById('m-wdir').textContent = '---';
+        return;
+    }
+    try {
+        const pointRes = await fetch(
+            `https://api.weather.gov/points/${lat.toFixed(4)},${lng.toFixed(4)}`,
+            {
+                headers: {
+                    'User-Agent': 'VortexOps/1.0 (storm-chase-app; cole.s.hall.x@gmail.com)',
+                    'Accept': 'application/geo+json'
+                }
+            }
+        );
+
+        if (!pointRes.ok) throw new Error('Points lookup failed');
+        const pointData = await pointRes.json();
+        const stationUrl = pointData.properties?.observationStations;
+        if (!stationUrl) throw new Error('No station URL found');
+
+        const stationsRes = await fetch(stationUrl, {
+            headers: {
+                'User-Agent': 'VortexOps/1.0 (storm-chase-app; contact@example.com)',
+                'Accept': 'application/geo+json'
+            }
+        });
+        if (!stationsRes.ok) throw new Error('Stations fetch failed');
+        const stationsData = await stationsRes.json();
+        const stationId = stationsData.features?.[0]?.properties?.stationIdentifier;
+        if (!stationId) throw new Error('No Station ID found');
+
+        const obsRes = await fetch(`/api/observations/${stationId}`);
+        if (!obsRes.ok) throw new Error('Observations Fetch Failed');
+        const obsData = await obsRes.json();
+
+        renderConditions(obsData.properties);
+    } catch (err) {
+        console.error('[VortexOps] Conditions fetch failed:', err);
+    }
+}
+
+function renderConditions(obs) {
+    const tempC = obs.temperature?.value;
+    const dewC = obs.dewpoint?.value;
+    const wspd = obs.windSpeed?.value;
+    const wdir = obs.windDirection?.value;
+
+
+    if (tempC != null && tempC !== undefined) {
+        const tempF = CONFIG.app.units === 'imperial'
+            ? Math.round((tempC * 9 / 5) + 32)
+            : Math.round(tempC);
+        document.getElementById('m-temp').textContent =
+            `${tempF}°${CONFIG.app.units === 'imperial' ? 'F' : 'C'}`;
+    }
+
+    if (dewC !== null && dewC !== undefined) {
+        const dewF = CONFIG.app.units === 'imperial'
+            ? Math.round((dewC * 9 / 5) + 32)
+            : Math.round(dewC);
+        document.getElementById('m-dew').textContent =
+            `${dewF}°${CONFIG.app.units === 'imperial' ? 'F' : 'C'}`;
+    }
+
+    if (wspd !== null && wspd !== undefined) {
+        const knots = Math.round(wspd * 1.94384);
+        document.getElementById('m-wspd').innerHTML =
+            `${knots}<span class="metric-unit">kt</span>`;
+    }
+
+    if (wdir !== null && wdir !== undefined) {
+        document.getElementById('m-wdir').textContent = degreesToCardinal(wdir);
+    }
+}
+
+function degreesToCardinal(deg) {
+    const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+        'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    return dirs[Math.round(deg / 22.5) % 16];
 }
 
 //Init on Load

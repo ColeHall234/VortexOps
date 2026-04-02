@@ -36,6 +36,11 @@ function initMap() {
     startClock();
     startRadarRefresh();
 
+    MapState.map.on('moveend', () => {
+        const center = MapState.map.getCenter();
+        fetchConditions(center.lat, center.lng);
+    });
+
     console.log('[VortexOps] Map initialized');
 }
 
