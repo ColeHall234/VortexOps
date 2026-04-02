@@ -126,20 +126,8 @@ function removeOutlookLayer() {
 }
 
 function addCapeLayer() {
-    if (MapState.layers.cape) return;
-
-    const bounds = CONFIG.spcAnalysis.bounds;
-    MapState.layers.cape = L.imageOverlay(
-        CONFIG.spcAnalysis.cape.url,
-        bounds,
-        {
-            opacity: CONFIG.spcAnalysis.opacity,
-            zIndex: 160,
-            attribution: 'NOAA/SPC',
-            interactive: false,
-            crossOrigin: true,
-        }
-    ).addTo(MapState.map);
+  console.log('[VortexOps] CAPE overlay — source pending');
+  return;
 }
 
 function removeCapeLayer() {
@@ -150,20 +138,8 @@ function removeCapeLayer() {
 }
 
 function addSrhLayer() {
-    if(MapState.layers.srh) return;
-
-    const bounds = CONFIG.spcAnalysis.bounds;
-    MapState.layers.srh = L.imageOverlay(
-        CONFIG.spcAnalysis.srh.url,
-        bounds,
-        {
-            opacity: CONFIG.spcAnalysis.opacity,
-            zIndex: 161,
-            attribution: 'NOAA/SPC',
-            interactive: false,
-            crossOrigin: true,
-        }
-    ).addTo(MapState.map);
+  console.log('[VortexOps] SRH overlay — source pending');
+  return;
 }
 
 function removeSrhLayer() {
