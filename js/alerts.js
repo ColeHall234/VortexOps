@@ -10,11 +10,13 @@ function initAlerts() {
     fetchAlerts();
     const center = CONFIG.map.center;
     fetchConditions(center[0], center[1]);
+    fetchInstability(center[0], center[1]);
 
     AlertState.refreshTimer = setInterval(fetchAlerts, CONFIG.alerts.refreshInterval);
     setInterval(() => {
         const c = MapState.map.getCenter();
         fetchConditions(c.lat, c.lng);
+        fetchInstability(c.lat, c.lng);
     }, 300000);
 
     console.log('[VortexOps] Alert polling started');
@@ -273,6 +275,99 @@ function degreesToCardinal(deg) {
         'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
     return dirs[Math.round(deg / 22.5) % 16];
 }
+//Instability
+async function fetchInstability(lat, lng) {
+    try {
+        const res = await fetch(`/api/instability?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}`);
+        if (!res.ok) throw new Error(`Instability Error: ${res.statis}`);
+        const data = await res.json();
 
+        const period = data.properties?.periods?.[0];
+        if (!period) throw new Error(`No forecast period`);
+
+        renderInstability(period);
+    } catch (err) {
+        console.error('[VortexOps] Instability Fetch Failed:', err);
+    }
+}
+
+function renderInstability(period) {
+    const panel = document.getElementById('instability-panel');
+
+    const windSpd = period.windSpeed || '--';
+    const windDir = period.windDirection || '--';
+    const forecast = period.forecast || '--';
+    const temp = period.temperature || '--';
+    const isDaytime = period.isDaytime;
+
+    const fcLower = forecast.toLowerCase();
+    let capeEst, srhEst, stpEst, color;
+
+    if (fcLower.includes('tornado') || fcLower.includes('severe')) {
+        capeEst = '2500+'; srhEst = '300+'; stpEst = '4+'; color = '#fca5a5';
+    } else if (fcLower.includes('thunderstorm') || fcLower.includes('t-storm')) {
+        capeEst = '1500'; srhEst = '150'; stpEst = '1.5'; color = '#fcd34d';
+    } else if (fcLower.includes('shower') || fcLower.includes('rain')) {
+        capeEst = '500'; srhEst = '75'; stpEst = '0.5'; color = '#86efac';
+    } else {
+        capeEst = '<100'; srhEst = '<50'; stpEst = '<0.1'; color = '#8b949e';
+    }
+
+    panel.innerHTML = `
+    <div class="instab-row">
+      <div class="instab-header">
+        <span class="instab-name">CAPE (est)</span>
+        <span class="instab-val" style="color:${color};">${capeEst} J/kg</span>
+      </div>
+      <div class="instab-bar">
+        <div class="instab-fill" style="width:${getCapeBarWidth(capeEst)}%"></div>
+      </div>
+    </div>
+    <div class="instab-row">
+      <div class="instab-header">
+        <span class="instab-name">SRH 0-3km (est)</span>
+        <span class="instab-val" style="color:${color};">${srhEst} m²/s²</span>
+      </div>
+      <div class="instab-bar">
+        <div class="instab-fill" style="width:${getSrhBarWidth(srhEst)}%"></div>
+      </div>
+    </div>
+    <div class="instab-row">
+      <div class="instab-header">
+        <span class="instab-name">STP (est)</span>
+        <span class="instab-val" style="color:${color};">${stpEst}</span>
+      </div>
+      <div class="instab-bar">
+        <div class="instab-fill" style="width:${getStpBarWidth(stpEst)}%"></div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:10px;color:#484f58;">
+      based on: ${forecast} · ${windDir} ${windSpd}
+    </div>`;
+}
+
+function getCapeBarWidth(cape) {
+    if (cape === '<100') return 5;
+    if (cape === '500') return 25;
+    if (cape === '1500') return 60;
+    if (cape === '2500+') return 90;
+    return 5;
+}
+
+function getSrhBarWidth(srh) {
+    if (srh === '<50') return 5;
+    if (srh === '75') return 20;
+    if (srh === '150') return 50;
+    if (srh === '300+') return 90;
+    return 5;
+}
+
+function getStpBarWidth(stp) {
+    if (stp === '<0.1') return 5;
+    if (stp === '0.5') return 20;
+    if (stp === '1.5') return 50;
+    if (stp === '4+') return 90;
+    return 5;
+}
 //Init on Load
 document.addEventListener('DOMContentLoaded', initAlerts);

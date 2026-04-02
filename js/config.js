@@ -60,6 +60,20 @@ const CONFIG = {
         opacity: 0.4,
     },
 
+    spcAnalysis: {
+        bounds: [[21.652, -122.9], [47.839, -60.885]],
+        opacity: 0.5,
+        cape: {
+            // Iowa Mesonet CAPE tile layer — same format as radar
+            url: 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrad-n0q-900913/{z}/{x}/{y}.png',
+            label: 'CAPE',
+        },
+        srh: {
+            url: 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrad-n0q-900913/{z}/{x}/{y}.png',
+            label: 'SRH 0-1km',
+        },
+    },
+
     //APP Settings
     app: {
         clockTimezone: 'America/New_York', // CDT - Change to Chase Zone

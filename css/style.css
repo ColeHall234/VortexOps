@@ -480,3 +480,10 @@ html, body, #app {
     margin-right: 3px;
 }
 
+.leaflet-tile-container img {
+    background: transparent;
+}
+
+.leaflet-tile {
+    background: transparent !important;
+}

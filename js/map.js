@@ -8,6 +8,8 @@ const MapState = {
         roads: null,
         outlook: null,
         lightning: null,
+        cape: null,
+        srh: null,
     },
     activeLayers: new Set(['radar', 'warnings']),
     warningPolygons: [],
@@ -39,6 +41,7 @@ function initMap() {
     MapState.map.on('moveend', () => {
         const center = MapState.map.getCenter();
         fetchConditions(center.lat, center.lng);
+        fetchInstability(center.lat, center.lng);
     });
 
     console.log('[VortexOps] Map initialized');
@@ -118,6 +121,54 @@ function removeOutlookLayer() {
     if (MapState.layers.outlook) {
         MapState.map.removeLayer(MapState.layers.outlook);
         MapState.layers.outlook = null;
+    }
+}
+
+function addCapeLayer() {
+    if (MapState.layers.cape) return;
+
+    const bounds = CONFIG.spcAnalysis.bounds;
+    MapState.layers.cape = L.imageOverlay(
+        CONFIG.spcAnalysis.cape.url,
+        bounds,
+        {
+            opacity: CONFIG.spcAnalysis.opacity,
+            zIndex: 160,
+            attribution: 'NOAA/SPC',
+            interactive: false,
+            crossOrigin: true,
+        }
+    ).addTo(MapState.map);
+}
+
+function removeCapeLayer() {
+    if (MapState.layers.cape) {
+        MapState.map.removeLayer(MapState.layers.cape);
+        MapState.layers.cape = null;
+    }
+}
+
+function addSrhLayer() {
+    if(MapState.layers.srh) return;
+
+    const bounds = CONFIG.spcAnalysis.bounds;
+    MapState.layers.srh = L.imageOverlay(
+        CONFIG.spcAnalysis.srh.url,
+        bounds,
+        {
+            opacity: CONFIG.spcAnalysis.opacity,
+            zIndex: 161,
+            attribution: 'NOAA/SPC',
+            interactive: false,
+            crossOrigin: true,
+        }
+    ).addTo(MapState.map);
+}
+
+function removeSrhLayer() {
+    if (MapState.layers.srh) {
+        MapState.map.removeLayer(MapState.layers.srh);
+        MapState.layers.srh = null;
     }
 }
 
@@ -227,6 +278,12 @@ function handleLayerOn(layer) {
         case 'outlook':
             addOutlookLayer();
             break;
+        case 'cape':
+            addCapeLayer();
+            break;
+        case 'srh':
+            addSrhLayer();
+            break;
         case 'lightning':
             console.log('[VortexOps] Lightning layer - coming soon');
             break;
@@ -249,6 +306,12 @@ function handleLayerOff(layer) {
             break;
         case 'outlook':
             removeOutlookLayer();
+            break;
+        case 'cape':
+            removeCapeLayer();
+            break;
+        case 'srh':
+            removeSrhLayer();
             break;
     }
 }
