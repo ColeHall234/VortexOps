@@ -13,6 +13,7 @@ const MapState = {
     },
     activeLayers: new Set(['radar', 'warnings']),
     warningPolygons: [],
+    lsrmarkers: [],
     radarRefreshTimer: null,
     radarTimestamp: null,
 }

@@ -1,6 +1,7 @@
 //State
 const AlertState = {
     lastAlerts: [],
+    lastLSRs: [],
     refreshTimer: null,
     selectedAlert: null,
 };
@@ -8,6 +9,7 @@ const AlertState = {
 //Init
 function initAlerts() {
     fetchAlerts();
+    fetchLSRs();
     const center = CONFIG.map.center;
     fetchConditions(center[0], center[1]);
     fetchInstability(center[0], center[1]);
@@ -368,6 +370,198 @@ function getStpBarWidth(stp) {
     if (stp === '1.5') return 50;
     if (stp === '4+') return 90;
     return 5;
+}
+
+//LSRs
+function getLSRConfig(type) {
+        for (const key of Object.keys(CONFIG.lsr.types)) {
+            if (type.includes(key)) return CONFIG.lsr.types[key];
+        }
+        return CONFIG.lsr.types['DEFAULT'];
+    }
+async function fetchLSRs() {
+    try {
+        const res = await fetch('/api/lsr');
+        if (!res.ok) throw new Error(`LSR Error: ${res.status}`);
+        const data = await res.json();
+
+        const products = data['@graph'] || [];
+        if (!products.length) {
+            renderSpotterReports([]);
+            return;
+        }
+
+        const recent = products.slice(0, 8);
+        const reports = [];
+
+        await Promise.all(recent.map(async (product) => {
+            try {
+                const detailRes = await fetch(`/api/lsr/${product.id}`);
+                if (!detailRes.ok) return;
+                const detail = await detailRes.json();
+                const parsed = parseLSRProduct(detail);
+                reports.push(...parsed);
+            } catch (e) {
+
+            }
+        }));
+
+        reports.sort((a, b) => a.priority - b.priority || b.time - a.time);
+
+        AlertState.lastLSRs = reports;
+        renderSpotterReports(reports);
+        drawLSRMarkers(reports);
+
+        console.log(`[VortexOps] ${reports.length} LSRs loaded`);
+
+    } catch (err) {
+        console.error('[VortexOps] LSR Fetch Failed:', err);
+    }
+    
+    function parseLSRProduct(product) {
+        const reports = [];
+        const text = product.productText || '';
+        const issuedAt = product.issuanceTime;
+        const lines = text.split('\n');
+
+        for (let i = 0; i < lines.length - 1; i++) {
+            const line = lines[i];
+
+            // match the coordinate line: ends with ##.##N ###.##W or ##.##N ##.##W
+            const coordMatch = line.match(/(\d{1,3}\.\d{2})N\s+(\d{1,3}\.\d{2})W\s*$/);
+            if (!coordMatch) continue;
+
+            const lat = parseFloat(coordMatch[1]);
+            const lng = -parseFloat(coordMatch[2]);
+
+            // extract event type from same line — it's between time and location
+            // format: "1237 AM     Non-Tstm Wnd Gst 4 S Lamance Creek..."
+            const timeEventMatch = line.match(
+                /^\d{3,4}\s+(?:AM|PM)\s{2,}(.+?)\s{3,}[\w\s]+\s+\d{1,3}\.\d{2}N/
+            );
+
+            let eventType = 'UNKNOWN';
+            if (timeEventMatch) {
+                eventType = timeEventMatch[1].trim().toUpperCase();
+            }
+
+            // next line has date, magnitude, county, state, source
+            const nextLine = lines[i + 1] || '';
+            const stateMatch = nextLine.match(/\b([A-Z]{2})\s+\w/);
+            const state = stateMatch ? stateMatch[1] : '';
+
+            // remarks are two lines down
+            const remarks = lines[i + 2]?.trim() || '';
+
+            // extract city from the coord line
+            const cityMatch = line.match(
+                /^\d{3,4}\s+(?:AM|PM)\s{2,}(?:.+?)\s{3,}([\w\s]+?)\s+\d{1,3}\.\d{2}N/
+            );
+            const city = cityMatch ? cityMatch[1].trim() : 'Unknown';
+
+            const config = getLSRConfig(eventType);
+
+            reports.push({
+                type: eventType,
+                city,
+                state,
+                lat,
+                lng,
+                color: config.color,
+                icon: config.icon,
+                priority: config.priority,
+                remarks: remarks.startsWith('..') ? '' : remarks,
+                issuedAt,
+            });
+        }
+
+        return reports;
+    }
+    
+
+    function extractRemarks(lines, matchedLine) {
+        const idx = lines.indexOf(matchedLine);
+        if (idx === 1 | idx >= lines.length - 1) return '';
+        return lines[idx + 1]?.trim() || '';
+    }
+}
+
+function renderSpotterReports(reports) {
+    const list = document.getElementById('spotter-list');
+
+    if (!reports.length) {
+        list.innerHTML = `
+        <div style="font-size:11px;color:#484f58;font-style:italic;padding:4px 0;">
+        No Recent Reports
+        </div>`;
+        return;
+    }
+    const display = reports.slice(0, CONFIG.lsr.maxReports);
+
+    list.innerHTML = display.map(r => {
+        const timeStr = formatLSRTime(r.issuedAt);
+        const typeConfig = getLSRConfig(r.type);
+
+        return `
+        <div class="spotter-item" onclick="flyToLSR(${r.lat}, ${r.lng})">
+        <span class="spotter-time" style="color:${typeConfig.color};">
+          ${timeStr}
+        </span>
+        <span style="color:${typeConfig.color};font-weight:500;">
+          ${r.type}
+        </span>
+        — ${r.city}, ${r.state}
+        ${r.remarks ? `<div style="color:#8b949e;font-size:10px;margin-top:2px;">
+          ${truncate(r.remarks, 60)}
+        </div>` : ''}
+      </div>`;
+    }).join('');
+}
+
+function formatLSRTime(isoString) {
+    if (!isoString) return '--:--';
+    return new Date(isoString).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: CONFIG.app.clockTimezone,
+        hour12: true,
+    });
+}
+
+function flyToLSR(lat, lng) {
+    MapState.map.flyTo([lat, lng], 9, { duration: 1.2 });
+}
+
+function drawLSRMarkers(reports) {
+    if (MapState.lsrMarkers) {
+        MapState.lsrMarkers.forEach(m => MapState.map.removeLayer(m));
+    }
+    MapState.lsrMarkers = [];
+
+    reports.forEach(r => {
+        if (!r.lat || !r.lng) return;
+
+        const marker = L.circleMarker([r.lat, r.lng], {
+            radius: 6,
+            fillColor: r.color,
+            color: r.color,
+            weight: 1.5,
+            fillOpacity: 0.8,
+            zIndex: 500,
+        });
+
+        marker.bindTooltip(`
+            <strong style="color:${r.color};">${r.type}</strong><br>
+            ${r.city}, ${r.state}<br>
+            ${r.remarks
+                ? `<span style="color:#8b949e;font-size:10px;">${r.remarks}</span>`
+                : ''
+            }
+            `, { stick: true, className: 'vortex-tooltip' });
+
+        marker.addTo(MapState.map);
+        MapState.lsrMarkers.push(marker);
+    });
 }
 //Init on Load
 document.addEventListener('DOMContentLoaded', initAlerts);

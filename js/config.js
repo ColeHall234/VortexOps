@@ -74,6 +74,23 @@ const CONFIG = {
         },
     },
 
+    // ── local storm reports ────────────────────────────────────
+    lsr: {
+        refreshInterval: 120000, // 2 minutes
+        maxReports: 20,
+        types: {
+            'TORNADO': { color: '#ef4444', icon: '⟁', priority: 1 },
+            'FUNNEL CLOUD': { color: '#f97316', icon: '◎', priority: 2 },
+            'WALL CLOUD': { color: '#f59e0b', icon: '◉', priority: 3 },
+            'LARGE HAIL': { color: '#a78bfa', icon: '●', priority: 4 },
+            'HAIL': { color: '#8b5cf6', icon: '●', priority: 5 },
+            'THUNDERSTORM': { color: '#60a5fa', icon: '◆', priority: 6 },
+            'WIND': { color: '#34d399', icon: '→', priority: 7 },
+            'FLASH FLOOD': { color: '#22d3ee', icon: '≈', priority: 8 },
+            'DEFAULT': { color: '#8b949e', icon: '◦', priority: 9 },
+        },
+    },
+
     //APP Settings
     app: {
         clockTimezone: 'America/New_York', // CDT - Change to Chase Zone

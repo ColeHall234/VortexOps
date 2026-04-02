@@ -69,19 +69,28 @@ app.get('/api/observations/:station', async (req, res) => {
 
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'VortexOps/1.0 (storm-chase-app; cole.s.hall.x@gmail.com)',
+                'User-Agent': 'VortexOps/1.0 (storm-chase-app; contact@example.com)',
                 'Accept': 'application/geo+json',
             }
         });
 
-        if (!response.ok) throw new Error(`NWS error: ${response.status}`);
+        // some stations return 404 or bad data — handle gracefully
+        if (!response.ok) {
+            return res.status(200).json({ properties: {} });
+        }
 
         const data = await response.json();
+
+        // validate we actually got observation properties
+        if (!data.properties) {
+            return res.status(200).json({ properties: {} });
+        }
+
         res.json(data);
 
     } catch (err) {
         console.error('[proxy] observations error:', err.message);
-        res.status(500).json({ error: err.message });
+        res.status(200).json({ properties: {} });
     }
 });
 // ── SPC image proxy ───────────────────────────────────────
@@ -121,7 +130,10 @@ app.get('/api/instability', async (req, res) => {
     try {
         const { lat, lng } = req.query;
 
-        // SPC mesoanalysis point data — free, no key needed
+        if (!lat || !lng) {
+            return res.status(400).json({ error: 'lat and lng required' });
+        }
+
         const url = `https://api.weather.gov/points/${lat},${lng}`;
 
         const pointRes = await fetch(url, {
@@ -131,12 +143,16 @@ app.get('/api/instability', async (req, res) => {
             }
         });
 
-        if (!pointRes.ok) throw new Error(`Points error: ${pointRes.status}`);
-        const pointData = await pointRes.json();
+        if (!pointRes.ok) {
+            return res.status(200).json({ properties: { periods: [] } });
+        }
 
-        // get the hourly forecast which contains derived instability params
+        const pointData = await pointRes.json();
         const forecastUrl = pointData.properties?.forecastHourly;
-        if (!forecastUrl) throw new Error('No forecast URL');
+
+        if (!forecastUrl) {
+            return res.status(200).json({ properties: { periods: [] } });
+        }
 
         const forecastRes = await fetch(forecastUrl, {
             headers: {
@@ -145,13 +161,61 @@ app.get('/api/instability', async (req, res) => {
             }
         });
 
-        if (!forecastRes.ok) throw new Error(`Forecast error: ${forecastRes.status}`);
-        const forecastData = await forecastRes.json();
+        if (!forecastRes.ok) {
+            return res.status(200).json({ properties: { periods: [] } });
+        }
 
+        const forecastData = await forecastRes.json();
         res.json(forecastData);
 
     } catch (err) {
         console.error('[proxy] instability error:', err.message);
+        res.status(200).json({ properties: { periods: [] } });
+    }
+});
+
+// ── NWS Local Storm Reports proxy ────────────────────────
+app.get('/api/lsr', async (req, res) => {
+    try {
+        // LSRs are published as products through the NWS API
+        // We fetch the latest significant weather products
+        const url = 'https://api.weather.gov/products?type=LSR&limit=50';
+
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'VortexOps/1.0 (storm-chase-app; contact@example.com)',
+                'Accept': 'application/geo+json',
+            }
+        });
+
+        if (!response.ok) throw new Error(`LSR error: ${response.status}`);
+        const data = await response.json();
+        res.json(data);
+
+    } catch (err) {
+        console.error('[proxy] LSR error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── single LSR product fetch ───────────────────────────────
+app.get('/api/lsr/:productId', async (req, res) => {
+    try {
+        const url = `https://api.weather.gov/products/${req.params.productId}`;
+
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'VortexOps/1.0 (storm-chase-app; contact@example.com)',
+                'Accept': 'application/geo+json',
+            }
+        });
+
+        if (!response.ok) throw new Error(`LSR product error: ${response.status}`);
+        const data = await response.json();
+        res.json(data);
+
+    } catch (err) {
+        console.error('[proxy] LSR product error:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
