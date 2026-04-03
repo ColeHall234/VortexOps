@@ -27,19 +27,20 @@ function switchView(view) {
 
     document.querySelectorAll(`.view-panel[data-view="${view}"]`).forEach(panel => {
         panel.classList.add('active');
-    })
+    });
 
     switch (view) {
         case 'alerts':
             renderFullAlertsList();
             renderAlertsSummary();
             break;
-        case 'soundings':
+        case 'soundings': {
             const center = MapState.map.getCenter();
             renderSoundingsView(center.lat, center.lng);
             fetchMCDs();
             fetchSWO();
             break;
+        }
         case 'history':
             renderHistoryView();
             break;
@@ -464,6 +465,7 @@ function getMCDTag(text) {
 
 // ── MCD modal ─────────────────────────────────────────────
 function openMCDModal(index) {
+    document.getElementById('modal-fly-btn').style.display = 'none';
     const d = MCDState.discussions[index];
     if (!d) return;
 
@@ -499,6 +501,7 @@ function openMCDModal(index) {
 }
 
 function openSWOModal(index) {
+    document.getElementById('modal-fly-btn').style.display = 'none';
     const s = MCDState.outlooks[index];
     if (!s) return;
 

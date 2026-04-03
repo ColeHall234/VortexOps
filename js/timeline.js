@@ -154,7 +154,7 @@ function startAnimation() {
     TimelineState.animTimer = setInterval(() => {
         const next = TimelineState.currentIndex + 1;
         if (next >= TimelineState.frames.length) {
-            stopAnimation();
+            loadRadarFrame(0);
             return;
         }
         loadRadarFrame(next);

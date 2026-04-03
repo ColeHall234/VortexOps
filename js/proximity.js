@@ -151,16 +151,17 @@ function checkProximity(alerts) {
         if (!ProximityState.activeAlerts.has(id)) {
             ProximityState.activeAlerts.add(id);
             triggerProximityAlert(closestAlert, closestDist, highestUrgency);
-        } else {
-            clearProximityAlert();
         }
+    } else {
+        clearProximityAlert();  // ← correct place
     }
 }
+
 
 function triggerProximityAlert(alert, distance, urgency) {
     const props = alert.properties;
     const eventName = props.event;
-    const area = props.areaDesc;
+    const area = props.areaDesc || 'Unknown';
     const alertConfig = CONFIG.proximity.alerts[eventName] || {};
 
     const isTor = urgency >= 3;
@@ -169,7 +170,7 @@ function triggerProximityAlert(alert, distance, urgency) {
     document.getElementById('proximity-title').textContent =
         `${eventName} - ${Math.round(distance)} mi away`;
     document.getElementById('proximity-body').textContent =
-        `${area} · expires ${formatExpires(props.expires)}`;
+        `${area} - expires ${formatExpires(props.expires)}`;
 
     const el = document.getElementById('proximity-alert');
     el.className = cls;

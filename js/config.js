@@ -38,7 +38,7 @@ const CONFIG = {
     //Base Map Tiles
     baseTiles: {
         url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-        attribution: '%copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://openstreetmap.org">OSM</a>',
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://openstreetmap.org">OSM</a>',
         subdomains: 'abcd',
         maxZoom: 19,
     },
@@ -56,7 +56,7 @@ const CONFIG = {
     spc: {
         url: 'https://www.spc.noaa.gov/gis/svrgis/zipped/',
         wmsUrl: 'https://mapservices.weather.noaa.gov/vector/services/outlooks/SPC_wx_outlks/MapServer/WMSServer',
-        layers: 3,
+        layers: '3',
         opacity: 0.4,
     },
 
@@ -65,11 +65,11 @@ const CONFIG = {
         opacity: 0.5,
         cape: {
             // Iowa Mesonet CAPE tile layer — same format as radar
-            url: 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrad-n0q-900913/{z}/{x}/{y}.png',
+            url: null,
             label: 'CAPE',
         },
         srh: {
-            url: 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrad-n0q-900913/{z}/{x}/{y}.png',
+            url: null,
             label: 'SRH 0-1km',
         },
     },
@@ -110,7 +110,7 @@ const CONFIG = {
         maxStrikes: 500,
         fadeTime: 600000,
         // Iowa Mesonet lightning tile layer — free, no API key
-        tileUrl: 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/ltg-conus/{z}/{x}/{y}.png',
+        tileUrl: null,
     },
 
     // ── storm cells ────────────────────────────────────────────

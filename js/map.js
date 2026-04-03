@@ -13,7 +13,7 @@ const MapState = {
     },
     activeLayers: new Set(['radar', 'warnings']),
     warningPolygons: [],
-    lsrmarkers: [],
+    lsrMarkers: [],
     cellMarkers: [],
     radarRefreshTimer: null,
     radarTimestamp: null,
@@ -80,13 +80,13 @@ function refreshRadar() {
 }
 
 function startRadarRefresh() {
-  MapState.radarRefreshTimer = setInterval(() => {
-    // don't refresh while timeline is animating or scrubbing
-    if (typeof TimelineState !== 'undefined' && TimelineState.playing) return;
-    if (typeof TimelineState !== 'undefined' &&
-        TimelineState.currentIndex < TimelineState.frames.length - 1) return;
-    refreshRadar();
-  }, CONFIG.radar.refreshInterval);
+    MapState.radarRefreshTimer = setInterval(() => {
+        // don't refresh while timeline is animating or scrubbing
+        if (typeof TimelineState !== 'undefined' && TimelineState.playing) return;
+        if (typeof TimelineState !== 'undefined' &&
+            TimelineState.currentIndex < TimelineState.frames.length - 1) return;
+        refreshRadar();
+    }, CONFIG.radar.refreshInterval);
 }
 
 //Roads Layer
@@ -218,7 +218,7 @@ function getWarningColor(cls) {
         'badge-tor': '#ef4444',
         'badge-svr': '#f59e0b',
         'badge-ffw': '#22c55e',
-        'badge-sct': '#3b92f6',
+        'badge-sct': '#3b82f6',
         'badge-default': '#8b949e',
     };
     return colorMap[cls] || '#8b949e';
@@ -320,9 +320,11 @@ function startClock() {
 //Timeline Display
 function updateTimelineDisplay() {
     if (!MapState.radarTimestamp) return;
+    // timeline.js handles display once initialized
+    if (typeof TimelineState !== 'undefined' && TimelineState.frames.length) return;
 
     const now = new Date();
-    const start = new Date(now.getTime() - 3 * 60 * 60 * 1000); //3hrs ago
+    const start = new Date(now.getTime() - 3 * 60 * 60 * 1000);
     const pct = 100;
 
     document.getElementById('tl-fill').style.width = `${pct}%`;
@@ -330,12 +332,8 @@ function updateTimelineDisplay() {
 
     document.getElementById('tl-start').textContent =
         start.toLocaleTimeString('en-US', {
-            hour: '2-digit', minute: '2-digit', timeZone: CONFIG.app.clockTimezone, hour12: true,
-        });
-
-    document.getElementById('tl-end').textContent =
-        now.toLocaleTimeString('en-US', {
-            hour: '2-digit', minute: '2-digit', timeZone: CONFIG.app.clockTimezone, hour12: true,
+            hour: '2-digit', minute: '2-digit',
+            timeZone: CONFIG.app.clockTimezone, hour12: true,
         });
 }
 

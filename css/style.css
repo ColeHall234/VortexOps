@@ -71,7 +71,7 @@ html, body, #app {
     color: #58a6ff;
 }
 
-.pill-active {
+.pill.active {
     background: #1d4ed8;
     border-color: #1d4ed8;
     color: #fff;
@@ -599,8 +599,8 @@ html, body, #app {
     flex-shrink: 0;
 }
 
-.proximity-tor #proximity-icon { color: #fca5a5};
-.proximity-svr #proximity-icon { color: #fcd34d};
+.proximity-tor #proximity-icon { color: #fca5a5;}
+.proximity-svr #proximity-icon { color: #fcd34d;}
 
 #proximity-title {
     font-size: 13px;
@@ -646,7 +646,7 @@ html, body, #app {
 }
 
 #topbar.flashing-svr {
-    animation: torSvr 1.2s ease infinite;
+    animation: svrFlash 1.2s ease infinite;
 }
 
 .view-panel {
@@ -656,8 +656,19 @@ html, body, #app {
 }
 
 .view-panel.active {
-    display: flex;
+    display: block;
     width: 100%;
+}
+
+.alert-item:hover {
+    background: #1c2128;
+    margin: 0 -14px;
+    padding-left: 14px;
+    padding-right: 14px;
+}
+
+.cell-item {
+  cursor: pointer;
 }
 
 /* Alert Modal */
@@ -690,7 +701,7 @@ html, body, #app {
 #modal-box {
     position: relative;
     width: 560px;
-    max-width: calc(100vw -32px);
+    max-width: calc(100vw - 32px);
     max-height: 80vh;
     background: #161b22;
     border: 0.5px solid #30363d;
@@ -710,7 +721,7 @@ html, body, #app {
     flex-shrink: 0;
 }
 
-#modal-bage-wrap {
+#modal-badge-wrap {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -807,7 +818,7 @@ html, body, #app {
     transition: all 0.15s;
 }
 
-#modal-bly-btn:hover {
+#modal-fly-btn:hover {
     background: rgba(29, 78, 216, 0.3);
 }
 
@@ -923,9 +934,14 @@ html, body, #app {
 }
 
 /* Lightning */
-@keyframes strikFlash {
+@keyframes strikeFlash {
     0% {opacity: 1;}
     50% {opacity: 0.3;}
     100% {opacity: 0;}
 }
 
+.overlay-pill:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}

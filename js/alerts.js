@@ -191,7 +191,7 @@ function updateStatusIndicator(alerts) {
 //Utilities
 function truncate(str, maxLen) {
     if (!str) return '';
-    return str.length > maxLen ? str.slice(0, maxLen) + '...' : str;
+    return str.length > maxLen ? str.slice(0, maxLen) + '…' : str;
 }
 
 //Surface Conditions
@@ -209,15 +209,12 @@ async function fetchConditions(lat, lng) {
         return;
     }
     try {
-        const pointRes = await fetch(
-            `https://api.weather.gov/points/${lat.toFixed(4)},${lng.toFixed(4)}`,
-            {
-                headers: {
-                    'User-Agent': 'VortexOps/1.0 (storm-chase-app; cole.s.hall.x@gmail.com)',
-                    'Accept': 'application/geo+json'
-                }
+        const pointRes = await fetch(`/api/points?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}`, {
+            headers: {
+                'User-Agent': 'VortexOps/1.0 (storm-chase-app; cole.s.hall.x@gmail.com)',
+                'Accept': 'application/geo+json'
             }
-        );
+        });
 
         if (!pointRes.ok) throw new Error('Points lookup failed');
         const pointData = await pointRes.json();
@@ -226,7 +223,7 @@ async function fetchConditions(lat, lng) {
 
         const stationsRes = await fetch(stationUrl, {
             headers: {
-                'User-Agent': 'VortexOps/1.0 (storm-chase-app; contact@example.com)',
+                'User-Agent': 'VortexOps/1.0 (storm-chase-app; cole.s.hall.x@gmail.com)',
                 'Accept': 'application/geo+json'
             }
         });
@@ -252,7 +249,7 @@ function renderConditions(obs) {
     const wdir = obs.windDirection?.value;
 
 
-    if (tempC != null && tempC !== undefined) {
+    if (tempC !== null && tempC !== undefined) {
         const tempF = CONFIG.app.units === 'imperial'
             ? Math.round((tempC * 9 / 5) + 32)
             : Math.round(tempC);
@@ -305,7 +302,7 @@ function renderInstability(period) {
 
     const windSpd = period.windSpeed || '--';
     const windDir = period.windDirection || '--';
-    const forecast = period.forecast || '--';
+    const forecast = period.shortForecast || '--';
     const temp = period.temperature || '--';
     const isDaytime = period.isDaytime;
 
@@ -488,7 +485,7 @@ async function fetchLSRs() {
 
     function extractRemarks(lines, matchedLine) {
         const idx = lines.indexOf(matchedLine);
-        if (idx === 1 | idx >= lines.length - 1) return '';
+        if (idx === -1 || idx >= lines.length - 1) return '';
         return lines[idx + 1]?.trim() || '';
     }
 }
@@ -564,7 +561,7 @@ function drawLSRMarkers(reports) {
                 ? `<span style="color:#8b949e;font-size:10px;">${r.remarks}</span>`
                 : ''
             }
-            `, { stick: true, className: 'vortex-tooltip' });
+            `, { sticky: true, className: 'vortex-tooltip' });
 
         marker.addTo(MapState.map);
         MapState.lsrMarkers.push(marker);

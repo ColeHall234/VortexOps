@@ -19,7 +19,7 @@
                     <div id="proximity-title">Warning</div>
                     <div id="proximity-body">A warning has been issued near your location.</div>
                 </div>
-                <button id="proximity-dismiss" onclick="dismissProximityAlert()">x</button>
+                <button id="proximity-dismiss" onclick="dismissProximityAlert()">✕</button>
             </div>
         </div>
         <div id="alert-modal" class="modal-hidden">
@@ -42,7 +42,7 @@
         </div>
         <div id="topbar">
             <div id="logo">
-                <svg width="22" height="22" viewbox="0 0 22 22" fill="none">
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
                     <circle cx="11" cy="11" r="10" stroke="#3b82f6" stroke-width="1.5" />
                     <path d="M11 3 C6 6 4 10 8 11 C12 12 10 16 11 19" stroke="#3b82f6" stroke-width="1.5"
                         stroke-linecap="round" fill="none" />
@@ -100,7 +100,7 @@
                     </div>
                 </div>
 
-                <!-- soundings view -->
+                
                 <!-- soundings view -->
                 <div class="view-panel" data-view="soundings">
                     <div class="section">
@@ -135,7 +135,7 @@
                 <div id="overlay-toggles">
                     <button class="overlay-pill active" data-layer="radar">radar</button>
                     <button class="overlay-pill active" data-layer="warnings">warnings</button>
-
+                    <button class="overlay-pill" data-layer="lightning" disabled title="coming soon">lightning</button>
                     <button class="overlay-pill" data-layer="outlook">SPC outlook</button>
                     <button class="overlay-pill" data-layer="roads">roads</button>
                 </div>
