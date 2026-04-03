@@ -10,7 +10,7 @@ function unlockAudio() {
     if (!ctx) return;
 
     const buffer = ctx.createBuffer(1, 1, 22050);
-    const source = ctx.createBuffersource();
+    const source = ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(ctx.destination);
     source.start(0);

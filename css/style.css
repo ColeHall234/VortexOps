@@ -591,3 +591,14 @@ html, body, #app {
 #topbar.flashing-svr {
     animation: torSvr 1.2s ease infinite;
 }
+
+.view-panel {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+}
+
+.view-panel.active {
+    display: flex;
+    width: 100%;
+}

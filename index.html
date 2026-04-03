@@ -1,66 +1,69 @@
 <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>VortexOps</title>
+<html lang="en">
 
-        <link rel="stylesheet" href="css/leaflet.css" />
-        <link rel="stylesheet" href="css/style.css" />
-    </head>
-    <body>
-        <div id="app">
-            <div id="proximity-alert" class="proximity-hidden">
-                <div id="proximity-inner">
-                    <div id="proximity-icon">⚠</div>
-                    <div id="proximity-content">
-                        <div id="proximity-title">Warning</div>
-                        <div id="proximity-body">A warning has been issued near your location.</div>
-                    </div>
-                    <button id="proximity-dismiss" onclick="dismissProximityAlert()">x</button>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VortexOps</title>
+
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <div id="app">
+        <div id="proximity-alert" class="proximity-hidden">
+            <div id="proximity-inner">
+                <div id="proximity-icon">⚠</div>
+                <div id="proximity-content">
+                    <div id="proximity-title">Warning</div>
+                    <div id="proximity-body">A warning has been issued near your location.</div>
                 </div>
+                <button id="proximity-dismiss" onclick="dismissProximityAlert()">x</button>
             </div>
-            <div id="topbar">
-                <div id="logo">
-                    <svg width="22" height="22" viewbox="0 0 22 22" fill="none">
-                        <circle cx="11" cy="11" r="10" stroke="#3b82f6" stroke-width="1.5" />
-                        <path d="M11 3 C6 6 4 10 8 11 C12 12 10 16 11 19"
-                            stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" fill="none" />
-                        <circle cx="11" cy="11" r="2" fill="#3b82f6" />
-                    </svg>
-                    VortexOps
-                </div>
-
-                <nav id="nav-pills">
-                    <button class="pill active" data-view="map">chase map</button>
-                    <button class="pill" data-view="alerts">alerts</button>
-                    <button class="pill" data-view="soundings">soundings</button>
-                    <button class="pill" data-view="history">history</button>
-                </nav>
-
-                <div id="topbar-right">
-                    <span id="status-dot"></span>
-                    <span id="status-text">live</span>
-                    <span id="clock">--:-- CDT</span>
-                </div>
+        </div>
+        <div id="topbar">
+            <div id="logo">
+                <svg width="22" height="22" viewbox="0 0 22 22" fill="none">
+                    <circle cx="11" cy="11" r="10" stroke="#3b82f6" stroke-width="1.5" />
+                    <path d="M11 3 C6 6 4 10 8 11 C12 12 10 16 11 19" stroke="#3b82f6" stroke-width="1.5"
+                        stroke-linecap="round" fill="none" />
+                    <circle cx="11" cy="11" r="2" fill="#3b82f6" />
+                </svg>
+                VortexOps
             </div>
 
-            <div id="main">
-                <div id="sidebar">
+            <nav id="nav-pills">
+                <button class="pill active" data-view="map">chase map</button>
+                <button class="pill" data-view="alerts">alerts</button>
+                <button class="pill" data-view="soundings">soundings</button>
+                <button class="pill" data-view="history">history</button>
+            </nav>
+
+            <div id="topbar-right">
+                <span id="status-dot"></span>
+                <span id="status-text">live</span>
+                <span id="clock">--:-- CDT</span>
+            </div>
+        </div>
+
+        <div id="main">
+            <div id="sidebar">
+
+                <!-- chase map view -->
+                <div class="view-panel active" data-view="map">
                     <div class="section" id="warnings-section">
                         <div class="section-label">active warnings</div>
                         <div id="warnings-list">
                             <div class="loading-msg">Loading warnings...</div>
                         </div>
                     </div>
-
                     <div class="section" id="cells-section">
                         <div class="section-label">tracked cells</div>
                         <div id="cells-list">
                             <div class="loading-msg">Awaiting data...</div>
                         </div>
                     </div>
-
                     <div class="section" id="intercept-section">
                         <div class="section-label">intercept route</div>
                         <div id="intercept-info">
@@ -69,19 +72,54 @@
                     </div>
                 </div>
 
-                <div id="map-container">
-                    <div id="map"></div>
-
-                    <div id="overlay-toggles">
-                        <button class="overlay-pill active" data-layer="radar">radar</button>
-                        <button class="overlay-pill active" data-layer="warnings">warnings</button>
-                        <button class="overlay-pill" data-layer="lightning">lightning</button>
-                        <button class="overlay-pill" data-layer="outlook">SPC outlook</button>
-                        <button class="overlay-pill" data-layer="roads">roads</button>
+                <!-- alerts view -->
+                <div class="view-panel" data-view="alerts">
+                    <div class="section">
+                        <div class="section-label">all active alerts</div>
+                        <div id="alerts-full-list">
+                            <div class="loading-msg">Loading...</div>
+                        </div>
                     </div>
                 </div>
 
-                <div id="right-panel">
+                <!-- soundings view -->
+                <div class="view-panel" data-view="soundings">
+                    <div class="section">
+                        <div class="section-label">atmospheric sounding</div>
+                        <div id="soundings-panel">
+                            <div class="loading-msg">Pan map to load sounding data...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- history view -->
+                <div class="view-panel" data-view="history">
+                    <div class="section">
+                        <div class="section-label">recent storm reports</div>
+                        <div id="history-list">
+                            <div class="loading-msg">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="map-container">
+                <div id="map"></div>
+
+                <div id="overlay-toggles">
+                    <button class="overlay-pill active" data-layer="radar">radar</button>
+                    <button class="overlay-pill active" data-layer="warnings">warnings</button>
+                    <button class="overlay-pill" data-layer="lightning">lightning</button>
+                    <button class="overlay-pill" data-layer="outlook">SPC outlook</button>
+                    <button class="overlay-pill" data-layer="roads">roads</button>
+                </div>
+            </div>
+
+            <div id="right-panel">
+
+                <!-- chase map view -->
+                <div class="view-panel active" data-view="map">
                     <div class="section">
                         <div class="section-label">surface conditions</div>
                         <div id="conditions-grid" class="metric-grid">
@@ -98,30 +136,27 @@
                                 <div class="metric-lbl">wind dir</div>
                             </div>
                             <div class="metric-card">
-                                <div class="metric-val" id="m-wspd">---<span class="metric-unit">kt</span></div>
+                                <div class="metric-val" id="m-wspd">--<span class="metric-unit">kt</span></div>
                                 <div class="metric-lbl">wind spd</div>
                             </div>
                         </div>
                     </div>
-
                     <div class="section">
                         <div class="section-label">instability</div>
                         <div id="instability-panel">
                             <div class="loading-msg">Awaiting sounding data...</div>
                         </div>
                     </div>
-
                     <div class="section">
                         <div class="section-label">lightning (last 10 min)</div>
                         <div id="lightning-panel">
-                            <div class="metric-val" id="lightning-count">---</div>
+                            <div class="metric-val" id="lightning-count">--</div>
                             <div class="metric-lbl">strikes detected</div>
                             <div id="lightning-closest" style="font-size:11px;color:#8b949e;margin-top:4px;">
                                 closest: --
                             </div>
                         </div>
                     </div>
-
                     <div class="section">
                         <div class="section-label">spotter reports</div>
                         <div id="spotter-list">
@@ -130,22 +165,57 @@
                     </div>
                 </div>
 
-            </div>
-            <div id="timeline">
-                <span class="tl-label" id="tl-start">--:--</span>
-                <div id="tl-track">
-                    <div id="tl-fill"></div>
-                    <div id="tl-thumb"></div>
+                <!-- alerts view -->
+                <div class="view-panel" data-view="alerts">
+                    <div class="section">
+                        <div class="section-label">alert summary</div>
+                        <div id="alerts-summary-panel">
+                            <div class="loading-msg">Loading...</div>
+                        </div>
+                    </div>
                 </div>
-                <span class="tl-label" id="tl-end">--:--</span>
-            </div>
 
+                <!-- soundings view -->
+                <div class="view-panel" data-view="soundings">
+                    <div class="section">
+                        <div class="section-label">sounding parameters</div>
+                        <div id="soundings-params">
+                            <div class="loading-msg">Pan map to load...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- history view -->
+                <div class="view-panel" data-view="history">
+                    <div class="section">
+                        <div class="section-label">lsr statistics</div>
+                        <div id="history-stats">
+                            <div class="loading-msg">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
-        <script src="js/leaflet.js"></script>
-        <script src="js/config.js"></script>
-        <script src="js/proximity.js"></script>
-        <script src="js/map.js"></script>
-        <script src="js/alerts.js"></script>
-    </body>
-    </html>
+    </div>
+    <div id="timeline">
+        <span class="tl-label" id="tl-start">--:--</span>
+        <div id="tl-track">
+            <div id="tl-fill"></div>
+            <div id="tl-thumb"></div>
+        </div>
+        <span class="tl-label" id="tl-end">--:--</span>
+    </div>
+
+    </div>
+
+    <script src="js/leaflet.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/proximity.js"></script>
+    <script src="js/views.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/alerts.js"></script>
+</body>
+
+</html>
