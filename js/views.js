@@ -216,5 +216,98 @@ function renderHistoryView() {
     }).join('')}`;
 }
 
+// ── alert modal ───────────────────────────────────────────
+const ModalState = {
+    currentAlert: null,
+};
+
+function openAlertModal(alertId) {
+    const alert = AlertState.lastAlerts.find(a => a.id === alertId);
+    if (!alert) return;
+
+    ModalState.currentAlert = alert;
+    const props = alert.properties;
+    const type = props.event || 'Warning';
+    const config = CONFIG.warningTypes[type] || CONFIG.warningTypes['default'];
+
+    // badge
+    const badge = document.getElementById('modal-badge');
+    badge.textContent = config.badge;
+    badge.className = `alert-badge ${config.cls}`;
+
+    // title
+    document.getElementById('modal-title').textContent = type;
+
+    // meta row
+    document.getElementById('modal-meta').innerHTML = `
+    <div class="modal-meta-item">
+      <span class="modal-meta-label">area</span>
+      <span class="modal-meta-value">${truncate(props.areaDesc || 'Unknown', 40)}</span>
+    </div>
+    <div class="modal-meta-item">
+      <span class="modal-meta-label">severity</span>
+      <span class="modal-meta-value">${props.severity || '--'}</span>
+    </div>
+    <div class="modal-meta-item">
+      <span class="modal-meta-label">certainty</span>
+      <span class="modal-meta-value">${props.certainty || '--'}</span>
+    </div>
+    <div class="modal-meta-item">
+      <span class="modal-meta-label">expires</span>
+      <span class="modal-meta-value" style="color:#fcd34d;">${formatExpires(props.expires)}</span>
+    </div>
+    <div class="modal-meta-item">
+      <span class="modal-meta-label">issued by</span>
+      <span class="modal-meta-value">${props.senderName || '--'}</span>
+    </div>`;
+
+    // body text
+    const description = props.description || 'No details available.';
+    const instruction = props.instruction || '';
+    const isPDS = description.includes('PARTICULARLY DANGEROUS SITUATION');
+
+    let bodyHTML = '';
+
+    if (isPDS) {
+        bodyHTML += `<span class="pds-highlight">⚠ PARTICULARLY DANGEROUS SITUATION</span>`;
+    }
+
+    bodyHTML += formatAlertText(description);
+
+    if (instruction) {
+        bodyHTML += `\n\n--- WHAT TO DO ---\n${formatAlertText(instruction)}`;
+    }
+
+    document.getElementById('modal-body').innerHTML = bodyHTML;
+
+    // show modal
+    const modal = document.getElementById('alert-modal');
+    modal.className = 'modal-visible';
+}
+
+function closeAlertModal() {
+    document.getElementById('alert-modal').className = 'modal-hidden';
+    ModalState.currentAlert = null;
+}
+
+function modalFlyTo() {
+    if (!ModalState.currentAlert) return;
+    flyToAlert(ModalState.currentAlert);
+    closeAlertModal();
+    switchView('map');
+}
+
+function formatAlertText(text) {
+    if (!text) return '';
+    // clean up excessive whitespace and format nicely
+    return text
+        .replace(/\r\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeAlertModal();
+});
 // ── kick off ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', initNavPills);

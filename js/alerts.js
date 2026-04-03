@@ -121,8 +121,8 @@ function handleAlertClick(alertId) {
     if (!alert) return;
 
     AlertState.selectedAlert = alert;
-    flyToAlert(alert);
     renderInterceptPanel(alert);
+    openAlertModal(alertId);
 }
 
 function renderInterceptPanel(alert) {

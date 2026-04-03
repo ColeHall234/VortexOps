@@ -22,6 +22,24 @@
                 <button id="proximity-dismiss" onclick="dismissProximityAlert()">x</button>
             </div>
         </div>
+        <div id="alert-modal" class="modal-hidden">
+            <div id="modal-backdrop" onclick="closeAlertModal()"></div>
+            <div id="modal-box">
+                <div id="modal-header">
+                    <div id="modal-badge-wrap">
+                        <span id="modal-badge" class="alert-badge">WRN</span>
+                        <span id="modal-title">Warning</span>
+                    </div>
+                    <button id="modal-close" onclick="closeAlertModal()">✕</button>
+                </div>
+                <div id="modal-meta"></div>
+                <div id="modal-body"></div>
+                <div id="modal-footer">
+                    <button id="modal-fly-btn" onclick="modalFlyTo()">fly to on map</button>
+                    <button id="modal-dismiss-btn" onclick="closeAlertModal()">dismiss</button>
+                </div>
+            </div>
+        </div>
         <div id="topbar">
             <div id="logo">
                 <svg width="22" height="22" viewbox="0 0 22 22" fill="none">
