@@ -37,6 +37,8 @@ function switchView(view) {
         case 'soundings':
             const center = MapState.map.getCenter();
             renderSoundingsView(center.lat, center.lng);
+            fetchMCDs();
+            fetchSWO();
             break;
         case 'history':
             renderHistoryView();
@@ -279,7 +281,7 @@ function openAlertModal(alertId) {
     }
 
     document.getElementById('modal-body').innerHTML = bodyHTML;
-
+    document.getElementById('modal-fly-btn').style.display = '';
     // show modal
     const modal = document.getElementById('alert-modal');
     modal.className = 'modal-visible';
@@ -305,9 +307,226 @@ function formatAlertText(text) {
         .replace(/\n{3,}/g, '\n\n')
         .trim();
 }
+// ── mesoscale discussions ─────────────────────────────────
+const MCDState = {
+    discussions: [],
+    outlooks: [],
+};
 
+async function fetchMCDs() {
+    try {
+        const res = await fetch('/api/mcd');
+        if (!res.ok) throw new Error('MCD fetch failed');
+        const data = await res.json();
+        const products = data['@graph'] || [];
+
+        const details = await Promise.all(
+            products.slice(0, 8).map(async p => {
+                try {
+                    const r = await fetch(`/api/mcd/${p.id}`);
+                    if (!r.ok) return null;
+                    return await r.json();
+                } catch { return null; }
+            })
+        );
+
+        MCDState.discussions = details.filter(Boolean);
+        renderMCDList();
+
+    } catch (err) {
+        console.error('[VortexOps] MCD fetch failed:', err);
+        document.getElementById('mcd-list').innerHTML =
+            `<div style="font-size:11px;color:#f87171;">Failed to load discussions</div>`;
+    }
+}
+
+async function fetchSWO() {
+    try {
+        const res = await fetch('/api/swo');
+        if (!res.ok) throw new Error('SWO fetch failed');
+        const data = await res.json();
+        const products = data['@graph'] || [];
+
+        const details = await Promise.all(
+            products.slice(0, 3).map(async p => {
+                try {
+                    const r = await fetch(`/api/swo/${p.id}`);
+                    if (!r.ok) return null;
+                    return await r.json();
+                } catch { return null; }
+            })
+        );
+
+        MCDState.outlooks = details.filter(Boolean);
+        renderSWOPanel();
+
+    } catch (err) {
+        console.error('[VortexOps] SWO fetch failed:', err);
+        document.getElementById('swo-panel').innerHTML =
+            `<div style="font-size:11px;color:#f87171;">Failed to load outlook</div>`;
+    }
+}
+
+function renderMCDList() {
+    const list = document.getElementById('mcd-list');
+
+    if (!MCDState.discussions.length) {
+        list.innerHTML = `
+      <div style="font-size:11px;color:#484f58;font-style:italic;padding:4px 0;">
+        No active mesoscale discussions
+      </div>`;
+        return;
+    }
+
+    list.innerHTML = MCDState.discussions.map((d, i) => {
+        const text = d.productText || '';
+        const time = formatExpires(d.issuanceTime);
+        const office = d.issuingOffice || '--';
+        const excerpt = extractMCDExcerpt(text);
+        const tag = getMCDTag(text);
+        const num = extractMCDNumber(text);
+
+        return `
+      <div class="mcd-item" onclick="openMCDModal(${i})">
+        <div class="mcd-header">
+          <span class="mcd-number">MCD #${num}</span>
+          <span class="mcd-time">${time}</span>
+        </div>
+        <div class="mcd-office">${office}</div>
+        <div class="mcd-excerpt">${truncate(excerpt, 80)}</div>
+        <span class="mcd-tag ${tag.cls}">${tag.label}</span>
+      </div>`;
+    }).join('');
+}
+
+function renderSWOPanel() {
+    const panel = document.getElementById('swo-panel');
+
+    if (!MCDState.outlooks.length) {
+        panel.innerHTML = `
+      <div style="font-size:11px;color:#484f58;font-style:italic;padding:4px 0;">
+        No outlook available
+      </div>`;
+        return;
+    }
+
+    panel.innerHTML = MCDState.outlooks.map((s, i) => {
+        const text = s.productText || '';
+        const time = formatExpires(s.issuanceTime);
+        const excerpt = extractSWOExcerpt(text);
+
+        return `
+      <div class="swo-item" onclick="openSWOModal(${i})">
+        <div class="swo-header">
+          <span class="swo-title">SPC Outlook</span>
+          <span class="swo-time">${time}</span>
+        </div>
+        <div class="swo-excerpt">${truncate(excerpt, 100)}</div>
+      </div>`;
+    }).join('');
+}
+
+function extractMCDExcerpt(text) {
+    const lines = text.split('\n').filter(l => l.trim().length > 20);
+    for (const line of lines) {
+        if (!line.match(/^[0-9]/) && !line.match(/^[A-Z]{4}/) &&
+            !line.includes('ATTN') && !line.includes('www')) {
+            return line.trim();
+        }
+    }
+    return 'See full discussion for details.';
+}
+
+function extractSWOExcerpt(text) {
+    const lines = text.split('\n').filter(l => l.trim().length > 20);
+    for (const line of lines) {
+        if (!line.match(/^\d/) && !line.match(/^[A-Z]{4,}/)) {
+            return line.trim();
+        }
+    }
+    return 'See full outlook for details.';
+}
+
+function extractMCDNumber(text) {
+    const match = text.match(/MESOSCALE DISCUSSION\s+(\d+)/i);
+    return match ? match[1] : '----';
+}
+
+function getMCDTag(text) {
+    const upper = text.toUpperCase();
+    if (upper.includes('TORNADO') || upper.includes('PARTICULARLY DANGEROUS')) {
+        return { cls: 'mcd-tag-tor', label: 'tornado threat' };
+    } else if (upper.includes('SEVERE') || upper.includes('HAIL')) {
+        return { cls: 'mcd-tag-svr', label: 'severe threat' };
+    }
+    return { cls: 'mcd-tag-gen', label: 'general convection' };
+}
+
+// ── MCD modal ─────────────────────────────────────────────
+function openMCDModal(index) {
+    const d = MCDState.discussions[index];
+    if (!d) return;
+
+    const text = d.productText || '';
+    const num = extractMCDNumber(text);
+    const tag = getMCDTag(text);
+    const office = d.issuingOffice || '--';
+    const time = formatExpires(d.issuanceTime);
+
+    document.getElementById('modal-badge').textContent = 'MCD';
+    document.getElementById('modal-badge').className = `alert-badge ${tag.cls}`;
+    document.getElementById('modal-title').textContent = `Mesoscale Discussion #${num}`;
+
+    document.getElementById('modal-meta').innerHTML = `
+    <div class="modal-meta-item">
+      <span class="modal-meta-label">issued by</span>
+      <span class="modal-meta-value">${office}</span>
+    </div>
+    <div class="modal-meta-item">
+      <span class="modal-meta-label">issued at</span>
+      <span class="modal-meta-value">${time}</span>
+    </div>
+    <div class="modal-meta-item">
+      <span class="modal-meta-label">type</span>
+      <span class="modal-meta-value" style="color:#93c5fd;">${tag.label}</span>
+    </div>`;
+
+    document.getElementById('modal-body').innerHTML =
+        formatAlertText(text);
+
+    document.getElementById('modal-fly-btn').style.display = 'none';
+    document.getElementById('alert-modal').className = 'modal-visible';
+}
+
+function openSWOModal(index) {
+    const s = MCDState.outlooks[index];
+    if (!s) return;
+
+    const text = s.productText || '';
+    const time = formatExpires(s.issuanceTime);
+
+    document.getElementById('modal-badge').textContent = 'SWO';
+    document.getElementById('modal-badge').className = 'alert-badge badge-svr';
+    document.getElementById('modal-title').textContent = 'Severe Weather Outlook';
+
+    document.getElementById('modal-meta').innerHTML = `
+    <div class="modal-meta-item">
+      <span class="modal-meta-label">issued by</span>
+      <span class="modal-meta-value">Storm Prediction Center</span>
+    </div>
+    <div class="modal-meta-item">
+      <span class="modal-meta-label">issued at</span>
+      <span class="modal-meta-value">${time}</span>
+    </div>`;
+
+    document.getElementById('modal-body').innerHTML =
+        formatAlertText(text);
+
+    document.getElementById('modal-fly-btn').style.display = 'none';
+    document.getElementById('alert-modal').className = 'modal-visible';
+}
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeAlertModal();
+    if (e.key === 'Escape') closeAlertModal();
 });
 // ── kick off ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', initNavPills);

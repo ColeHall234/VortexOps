@@ -219,6 +219,94 @@ app.get('/api/lsr/:productId', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// ── SPC Mesoscale Discussions proxy ───────────────────────
+app.get('/api/mcd', async (req, res) => {
+    try {
+        const url = 'https://api.weather.gov/products?type=MCD&limit=10';
+
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'VortexOps/1.0 (storm-chase-app; contact@example.com)',
+                'Accept': 'application/geo+json',
+            }
+        });
+
+        if (!response.ok) throw new Error(`MCD error: ${response.status}`);
+        const data = await response.json();
+        res.json(data);
+
+    } catch (err) {
+        console.error('[proxy] MCD error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── SPC MCD product detail proxy ──────────────────────────
+app.get('/api/mcd/:productId', async (req, res) => {
+    try {
+        const url = `https://api.weather.gov/products/${req.params.productId}`;
+
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'VortexOps/1.0 (storm-chase-app; contact@example.com)',
+                'Accept': 'application/geo+json',
+            }
+        });
+
+        if (!response.ok) throw new Error(`MCD product error: ${response.status}`);
+        const data = await response.json();
+        res.json(data);
+
+    } catch (err) {
+        console.error('[proxy] MCD product error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── SPC Severe Weather Outlook proxy ──────────────────────
+app.get('/api/swo', async (req, res) => {
+    try {
+        const url = 'https://api.weather.gov/products?type=SWO&limit=5';
+
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'VortexOps/1.0 (storm-chase-app; contact@example.com)',
+                'Accept': 'application/geo+json',
+            }
+        });
+
+        if (!response.ok) throw new Error(`SWO error: ${response.status}`);
+        const data = await response.json();
+        res.json(data);
+
+    } catch (err) {
+        console.error('[proxy] SWO error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── SWO product detail proxy ──────────────────────────────
+app.get('/api/swo/:productId', async (req, res) => {
+    try {
+        const url = `https://api.weather.gov/products/${req.params.productId}`;
+
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'VortexOps/1.0 (storm-chase-app; contact@example.com)',
+                'Accept': 'application/geo+json',
+            }
+        });
+
+        if (!response.ok) throw new Error(`SWO product error: ${response.status}`);
+        const data = await response.json();
+        res.json(data);
+
+    } catch (err) {
+        console.error('[proxy] SWO product error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
 app.listen(PORT, () => {
     console.log(`[VortexOps] Server running at http://localhost:${PORT}`);
 });
