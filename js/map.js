@@ -14,6 +14,7 @@ const MapState = {
     activeLayers: new Set(['radar', 'warnings']),
     warningPolygons: [],
     lsrmarkers: [],
+    cellMarkers: [],
     radarRefreshTimer: null,
     radarTimestamp: null,
 }

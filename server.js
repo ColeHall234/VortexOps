@@ -374,7 +374,26 @@ function connectBlitzortung() {
 
     tryConnect();
 }
+// ── NEXRAD storm attributes proxy ────────────────────────
+app.get('/api/cells', async (req, res) => {
+    try {
+        const url = 'https://mesonet.agron.iastate.edu/geojson/nexrad_attr.geojson';
 
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'VortexOps/1.0 (storm-chase-app; contact@example.com)',
+            }
+        });
+
+        if (!response.ok) throw new Error(`Cells error: ${response.status}`);
+        const data = await response.json();
+        res.json(data);
+
+    } catch (err) {
+        console.error('[proxy] cells error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
 app.listen(PORT, () => {
     console.log(`[VortexOps] Server running at http://localhost:${PORT}`);
 });

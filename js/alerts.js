@@ -2,6 +2,7 @@
 const AlertState = {
     lastAlerts: [],
     lastLSRs: [],
+    lastCells: [],
     refreshTimer: null,
     selectedAlert: null,
 };
@@ -10,6 +11,7 @@ const AlertState = {
 function initAlerts() {
     fetchAlerts();
     fetchLSRs();
+    fetchCells();
     initGPS();
     const center = CONFIG.map.center;
     fetchConditions(center[0], center[1]);
@@ -17,6 +19,8 @@ function initAlerts() {
 
 
     AlertState.refreshTimer = setInterval(fetchAlerts, CONFIG.alerts.refreshInterval);
+    setInterval(fetchLSRs, CONFIG.lsr.refreshInterval);
+    setInterval(fetchCells, CONFIG.cells.refreshInterval);
     setInterval(() => {
         const c = MapState.map.getCenter();
         fetchConditions(c.lat, c.lng);
@@ -377,11 +381,11 @@ function getStpBarWidth(stp) {
 
 //LSRs
 function getLSRConfig(type) {
-        for (const key of Object.keys(CONFIG.lsr.types)) {
-            if (type.includes(key)) return CONFIG.lsr.types[key];
-        }
-        return CONFIG.lsr.types['DEFAULT'];
+    for (const key of Object.keys(CONFIG.lsr.types)) {
+        if (type.includes(key)) return CONFIG.lsr.types[key];
     }
+    return CONFIG.lsr.types['DEFAULT'];
+}
 async function fetchLSRs() {
     try {
         const res = await fetch('/api/lsr');
@@ -480,7 +484,7 @@ async function fetchLSRs() {
 
         return reports;
     }
-    
+
 
     function extractRemarks(lines, matchedLine) {
         const idx = lines.indexOf(matchedLine);
@@ -565,6 +569,216 @@ function drawLSRMarkers(reports) {
         marker.addTo(MapState.map);
         MapState.lsrMarkers.push(marker);
     });
+}
+
+// ── storm cells ───────────────────────────────────────────
+async function fetchCells() {
+    try {
+        const res = await fetch('/api/cells');
+        if (!res.ok) throw new Error(`Cells error: ${res.status}`);
+        const data = await res.json();
+
+        const features = data.features || [];
+
+        // filter by minimum reflectivity and parse
+        const cells = features
+            .map(f => {
+                const p = f.properties;
+                return {
+                    id: p.storm_id || '----',
+                    lat: f.geometry.coordinates[1],
+                    lng: f.geometry.coordinates[0],
+                    dbz: p.max_dbz || 0,
+                    top: p.storm_top || 0,       // ft MSL
+                    dir: p.drct || 0,            // degrees
+                    speed: p.sknt || 0,            // knots
+                    tvs: p.tvs || 'NONE',        // tornado vortex signature
+                    meso: p.meso || 'NONE',       // mesocyclone
+                    station: p.station || '--',
+                };
+            })
+            .filter(c => c.dbz >= CONFIG.cells.minDbz)
+            .sort((a, b) => b.dbz - a.dbz);
+
+        AlertState.lastCells = cells;
+        renderCellsSidebar(cells);
+        drawCellMarkers(cells);
+
+        console.log(`[VortexOps] ${cells.length} storm cells loaded`);
+
+    } catch (err) {
+        console.error('[VortexOps] Cells fetch failed:', err);
+        document.getElementById('cells-list').innerHTML =
+            `<div class="loading-msg">Cell data unavailable</div>`;
+    }
+}
+
+function getCellStrength(cell) {
+    if (cell.tvs !== 'NONE' || cell.dbz >= CONFIG.cells.strengthThresholds.tor) {
+        return { cls: 'str-tor', label: 'TOR+' };
+    } else if (cell.dbz >= CONFIG.cells.strengthThresholds.svr) {
+        return { cls: 'str-svr', label: 'SVR' };
+    }
+    return { cls: 'str-obs', label: 'OBS' };
+}
+
+function degreesToDir(deg) {
+    const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+        'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    return dirs[Math.round(deg / 22.5) % 16];
+}
+
+// ── render cells sidebar ──────────────────────────────────
+function renderCellsSidebar(cells) {
+    const list = document.getElementById('cells-list');
+
+    if (!cells.length) {
+        list.innerHTML = `
+      <div style="font-size:11px;color:#484f58;font-style:italic;padding:4px 0;">
+        No significant cells detected
+      </div>`;
+        return;
+    }
+
+    const display = cells.slice(0, 8);
+
+    list.innerHTML = display.map((cell, i) => {
+        const strength = getCellStrength(cell);
+        const dirStr = degreesToDir(cell.dir);
+        const topKft = Math.round(cell.top / 1000);
+
+        return `
+      <div class="cell-item" onclick="selectCell(${i})">
+        <div>
+          <div class="cell-name">
+            Cell ${cell.id}
+            <span style="font-size:10px;color:#8b949e;margin-left:4px;">
+              ${cell.station}
+            </span>
+          </div>
+          <div class="cell-detail">
+            ${dirStr} @ ${cell.speed}kt · ${cell.dbz}dBZ · top ${topKft}kft
+          </div>
+        </div>
+        <div class="cell-strength ${strength.cls}">${strength.label}</div>
+      </div>`;
+    }).join('');
+
+    if (cells.length > 8) {
+        list.innerHTML += `
+      <div style="font-size:10px;color:#8b949e;padding:6px 0;text-align:center;">
+        +${cells.length - 8} more cells
+      </div>`;
+    }
+}
+
+// ── draw cell markers on map ──────────────────────────────
+function drawCellMarkers(cells) {
+    if (MapState.cellMarkers) {
+        MapState.cellMarkers.forEach(m => MapState.map.removeLayer(m));
+    }
+    MapState.cellMarkers = [];
+
+    cells.forEach((cell, i) => {
+        const strength = getCellStrength(cell);
+        const color = strength.cls === 'str-tor' ? '#ef4444'
+            : strength.cls === 'str-svr' ? '#f59e0b'
+                : '#22c55e';
+
+        // cell dot
+        const marker = L.circleMarker([cell.lat, cell.lng], {
+            radius: 8,
+            fillColor: color,
+            color: color,
+            weight: 2,
+            fillOpacity: 0.3,
+            zIndex: 550,
+        });
+
+        // motion vector line
+        const rad = (cell.dir * Math.PI) / 180;
+        const distDeg = (cell.speed * 0.0003);  // rough degree offset per knot
+        const endLat = cell.lat + Math.cos(rad) * distDeg * 10;
+        const endLng = cell.lng + Math.sin(rad) * distDeg * 10;
+
+        const vector = L.polyline(
+            [[cell.lat, cell.lng], [endLat, endLng]],
+            { color: color, weight: 2, opacity: 0.7, dashArray: '4 4' }
+        );
+
+        marker.bindTooltip(`
+      <strong style="color:${color};">Cell ${cell.id}</strong><br>
+      ${cell.dbz} dBZ · ${degreesToDir(cell.dir)} @ ${cell.speed}kt<br>
+      Top: ${Math.round(cell.top / 1000)}kft<br>
+      <span style="color:#8b949e;font-size:10px;">${cell.station}</span>
+    `, { sticky: true, className: 'vortex-tooltip' });
+
+        marker.on('click', () => selectCell(i));
+
+        marker.addTo(MapState.map);
+        vector.addTo(MapState.map);
+        MapState.cellMarkers.push(marker);
+        MapState.cellMarkers.push(vector);
+    });
+}
+
+// ── select a cell ─────────────────────────────────────────
+function selectCell(index) {
+    const cell = AlertState.lastCells[index];
+    if (!cell) return;
+
+    MapState.map.flyTo([cell.lat, cell.lng], 9, { duration: 1.2 });
+    renderCellInterceptPanel(cell);
+}
+
+function renderCellInterceptPanel(cell) {
+    const panel = document.getElementById('intercept-info');
+    const userLat = CONFIG.proximity.userLat;
+    const userLng = CONFIG.proximity.userLng;
+    const dist = haversineDistance(userLat, userLng, cell.lat, cell.lng);
+    const strength = getCellStrength(cell);
+
+    // calculate ETA based on storm speed
+    const speedMph = cell.speed * 1.15078;
+    const etaMin = speedMph > 0 ? Math.round((dist / speedMph) * 60) : null;
+
+    // escape vector — opposite of storm motion
+    const escapeDir = degreesToDir((cell.dir + 180) % 360);
+
+    panel.innerHTML = `
+    <div style="font-size:11px;color:#c9d1d9;line-height:1.8;">
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:#8b949e;">target</span>
+        <span style="font-weight:500;">Cell ${cell.id} (${cell.station})</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:#8b949e;">strength</span>
+        <span class="cell-strength ${strength.cls}" style="font-size:11px;padding:1px 6px;">
+          ${strength.label} · ${cell.dbz} dBZ
+        </span>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:#8b949e;">distance</span>
+        <span>${Math.round(dist)} mi</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:#8b949e;">movement</span>
+        <span>${degreesToDir(cell.dir)} @ ${cell.speed}kt</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:#8b949e;">storm top</span>
+        <span>${Math.round(cell.top / 1000)}kft</span>
+      </div>
+      ${etaMin ? `
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:#8b949e;">ETA intercept</span>
+        <span style="color:#fcd34d;">~${etaMin} min</span>
+      </div>` : ''}
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:#8b949e;">escape vector</span>
+        <span style="color:#86efac;">${escapeDir} clear</span>
+      </div>
+    </div>`;
 }
 //Init on Load
 document.addEventListener('DOMContentLoaded', initAlerts);

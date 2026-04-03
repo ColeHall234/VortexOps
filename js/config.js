@@ -112,6 +112,17 @@ const CONFIG = {
         // Iowa Mesonet lightning tile layer — free, no API key
         tileUrl: 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/ltg-conus/{z}/{x}/{y}.png',
     },
+
+    // ── storm cells ────────────────────────────────────────────
+    cells: {
+        refreshInterval: 120000, // 2 minutes
+        minDbz: 30,              // minimum reflectivity to show
+        strengthThresholds: {
+            tor: 65,            // dBZ — likely tornadic
+            svr: 55,            // dBZ — severe
+            obs: 30,            // dBZ — observable
+        },
+    },
     //APP Settings
     app: {
         clockTimezone: 'America/New_York', // CDT - Change to Chase Zone
