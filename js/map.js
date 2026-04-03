@@ -126,8 +126,8 @@ function removeOutlookLayer() {
 }
 
 function addCapeLayer() {
-  console.log('[VortexOps] CAPE overlay — source pending');
-  return;
+    console.log('[VortexOps] CAPE overlay — source pending');
+    return;
 }
 
 function removeCapeLayer() {
@@ -138,8 +138,8 @@ function removeCapeLayer() {
 }
 
 function addSrhLayer() {
-  console.log('[VortexOps] SRH overlay — source pending');
-  return;
+    console.log('[VortexOps] SRH overlay — source pending');
+    return;
 }
 
 function removeSrhLayer() {
@@ -262,7 +262,8 @@ function handleLayerOn(layer) {
             addSrhLayer();
             break;
         case 'lightning':
-            console.log('[VortexOps] Lightning layer - coming soon');
+            initLightning();
+            redrawLightningMarkers();
             break;
     }
 }
@@ -290,6 +291,7 @@ function handleLayerOff(layer) {
         case 'srh':
             removeSrhLayer();
             break;
+        case 'lightning': destroyLightning(); break;
     }
 }
 
@@ -325,7 +327,7 @@ function updateTimelineDisplay() {
         start.toLocaleTimeString('en-US', {
             hour: '2-digit', minute: '2-digit', timeZone: CONFIG.app.clockTimezone, hour12: true,
         });
-    
+
     document.getElementById('tl-end').textContent =
         now.toLocaleTimeString('en-US', {
             hour: '2-digit', minute: '2-digit', timeZone: CONFIG.app.clockTimezone, hour12: true,
@@ -348,7 +350,7 @@ function flyToAlert(alert) {
     const coords = geo.type === 'Polygon'
         ? geo.coordinates[0]
         : geo.coordinates[0][0];
-    
+
     const lats = coords.map(c => c[1]);
     const lngs = coords.map(c => c[0]);
 

@@ -2,6 +2,7 @@ const express = require('express');
 const fetch = require('node-fetch');
 const cors = require('cors');
 const path = require('path');
+const WebSocket = require('ws');
 
 const app = express();
 const PORT = 3000;
@@ -307,6 +308,73 @@ app.get('/api/swo/:productId', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// ── Lightning strike buffer ───────────────────────────────
+const lightningBuffer = [];
+const MAX_STRIKES = 500;
+
+function connectBlitzortung() {
+    const servers = [
+        'ws://ws1.blitzortung.org/bo/json/4/',
+        'ws://ws3.blitzortung.org/bo/json/4/',
+        'ws://ws5.blitzortung.org/bo/json/4/',
+        'ws://ws7.blitzortung.org/bo/json/4/',
+        'ws://ws8.blitzortung.org/bo/json/4/',
+    ];
+
+    let serverIndex = 0;
+
+    function tryConnect() {
+        const url = servers[serverIndex % servers.length];
+        serverIndex++;
+
+        console.log(`[lightning] connecting to ${url}`);
+
+        const ws = new WebSocket(url, {
+            rejectUnauthorized: false,  // bypass cert validation server-side
+        });
+
+        ws.on('open', () => {
+            console.log(`[lightning] connected to ${url}`);
+            ws.send(JSON.stringify({
+                west: -130,
+                east: -60,
+                north: 55,
+                south: 20,
+            }));
+        });
+
+        ws.on('message', (data) => {
+            try {
+                const strike = JSON.parse(data.toString());
+                if (strike.lat && strike.lon) {
+                    lightningBuffer.push({
+                        lat: strike.lat / 1e6,
+                        lng: strike.lon / 1e6,
+                        time: Date.now(),
+                    });
+
+                    // trim buffer
+                    if (lightningBuffer.length > MAX_STRIKES) {
+                        lightningBuffer.shift();
+                    }
+                }
+            } catch (e) { /* ignore */ }
+        });
+
+        ws.on('error', (err) => {
+            console.warn(`[lightning] error on ${url}:`, err.message);
+        });
+
+        ws.on('close', () => {
+            console.log(`[lightning] disconnected — retrying in 5s`);
+            setTimeout(tryConnect, 5000);
+        });
+    }
+
+    tryConnect();
+}
+
 app.listen(PORT, () => {
     console.log(`[VortexOps] Server running at http://localhost:${PORT}`);
 });
