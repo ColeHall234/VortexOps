@@ -135,7 +135,7 @@
                 <div id="overlay-toggles">
                     <button class="overlay-pill active" data-layer="radar">radar</button>
                     <button class="overlay-pill active" data-layer="warnings">warnings</button>
-                   
+
                     <button class="overlay-pill" data-layer="outlook">SPC outlook</button>
                     <button class="overlay-pill" data-layer="roads">roads</button>
                 </div>
@@ -200,7 +200,7 @@
                     </div>
                 </div>
 
-                <!-- soundings view -->
+
                 <!-- soundings view -->
                 <div class="view-panel" data-view="soundings">
                     <div class="section">
@@ -230,14 +230,17 @@
             </div>
         </div>
 
-    </div>
+
     <div id="timeline">
+        <button id="tl-play-btn" onclick="toggleRadarAnimation()">▶</button>
         <span class="tl-label" id="tl-start">--:--</span>
         <div id="tl-track">
             <div id="tl-fill"></div>
             <div id="tl-thumb"></div>
+            <div id="tl-frames"></div>
         </div>
-        <span class="tl-label" id="tl-end">--:--</span>
+        <span class="tl-label" id="tl-end">NOW</span>
+        <span id="tl-current-time">--:--</span>
     </div>
 
     </div>
@@ -246,6 +249,7 @@
     <script src="js/config.js"></script>
     <script src="js/proximity.js"></script>
     <script src="js/lightning.js"></script>
+    <script src="js/timeline.js"></script>
     <script src="js/views.js"></script>
     <script src="js/map.js"></script>
     <script src="js/alerts.js"></script>

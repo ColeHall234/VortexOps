@@ -79,9 +79,13 @@ function refreshRadar() {
 }
 
 function startRadarRefresh() {
-    MapState.radarRefreshTimer = setInterval(() => {
-        refreshRadar();
-    }, CONFIG.radar.refreshInterval);
+  MapState.radarRefreshTimer = setInterval(() => {
+    // don't refresh while timeline is animating or scrubbing
+    if (typeof TimelineState !== 'undefined' && TimelineState.playing) return;
+    if (typeof TimelineState !== 'undefined' &&
+        TimelineState.currentIndex < TimelineState.frames.length - 1) return;
+    refreshRadar();
+  }, CONFIG.radar.refreshInterval);
 }
 
 //Roads Layer
