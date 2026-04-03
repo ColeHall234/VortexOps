@@ -91,6 +91,20 @@ const CONFIG = {
         },
     },
 
+    proximity: {
+        enabled: true,
+        radius: 100,
+        userLat: 40.7957,
+        userLng: -81.3785,
+        alerts: {
+            'Tornado Warning': {sound: 'tornado', urgency: 3},
+            'Tornado Watch': {sound: 'watch', urgency: 2},
+            'Severe Thunderstorm Warning': {sound: 'severe', urgency: 2},
+            'Severe Thunderstorm Watch': {sound: 'watch', urgency: 1},
+            'Flash Flood Warning': {sound: 'flood', urgency: 1},
+        },
+    },
+
     //APP Settings
     app: {
         clockTimezone: 'America/New_York', // CDT - Change to Chase Zone

@@ -10,9 +10,11 @@ const AlertState = {
 function initAlerts() {
     fetchAlerts();
     fetchLSRs();
+    initGPS();
     const center = CONFIG.map.center;
     fetchConditions(center[0], center[1]);
     fetchInstability(center[0], center[1]);
+
 
     AlertState.refreshTimer = setInterval(fetchAlerts, CONFIG.alerts.refreshInterval);
     setInterval(() => {
@@ -53,6 +55,7 @@ async function fetchAlerts() {
         renderAlertsSidebar(alerts);
         drawWarningPolygons(alerts);
         updateStatusIndicator(alerts);
+        checkProximity(alerts);
 
         console.log(`[VortexOps] ${alerts.length} alerts loaded`);
 
@@ -417,7 +420,7 @@ async function fetchLSRs() {
     } catch (err) {
         console.error('[VortexOps] LSR Fetch Failed:', err);
     }
-    
+
     function parseLSRProduct(product) {
         const reports = [];
         const text = product.productText || '';

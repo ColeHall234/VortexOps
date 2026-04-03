@@ -487,3 +487,107 @@ html, body, #app {
 .leaflet-tile {
     background: transparent !important;
 }
+
+/* Proximity Alert */
+#proximity-alert {
+    position: fixed;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    width: 480px;
+    max-width: calc(100vw - 32px);
+    transition: all 0.3s ease;
+}
+
+#proximity-alert.proximity-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-12px);
+}
+
+#proximity-alert.proximity-tor {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(-50%) translateY(0);
+}
+
+#proximity-alert.proximity-svr {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(-50%) translateY(0);
+}
+
+#proximity-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid;
+}
+
+.proximity-tor #proximity-inner {
+    background: #450a0a;
+    border-color: #ef4444;
+}
+
+.proximity-svr #proximity-inner {
+    background: #431407;
+    border-color: #f59e0b;
+}
+
+#proximity-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.proximity-tor #proximity-icon { color: #fca5a5};
+.proximity-svr #proximity-icon { color: #fcd34d};
+
+#proximity-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #e6edf3;
+    margin-bottom: 2px;
+}
+
+#proximity-body {
+    font-size: 11px;
+    color: #8b949e;
+    line-height: 1.4;
+}
+
+#proximity-dismiss {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: #8b949e;
+    font-size: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 4px;
+}
+
+#proximity-dismiss:hover {
+    color: #e6edf3;
+}
+
+/* Top Bar Flash */
+@keyframes torFlash {
+    0%, 100% {background: #161b22;}
+    50%     {background: #450a0a;}
+}
+
+@keyframes svrFlash {
+    0%, 100% {background: #161b22;}
+    50%      {background: #431407;}
+}
+
+#topbar.flashing-tor {
+    animation: torFlash 0.8s ease infinite;
+}
+
+#topbar.flashing-svr {
+    animation: torSvr 1.2s ease infinite;
+}

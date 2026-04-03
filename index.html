@@ -10,6 +10,16 @@
     </head>
     <body>
         <div id="app">
+            <div id="proximity-alert" class="proximity-hidden">
+                <div id="proximity-inner">
+                    <div id="proximity-icon">⚠</div>
+                    <div id="proximity-content">
+                        <div id="proximity-title">Warning</div>
+                        <div id="proximity-body">A warning has been issued near your location.</div>
+                    </div>
+                    <button id="proximity-dismiss" onclick="dismissProximityAlert()">x</button>
+                </div>
+            </div>
             <div id="topbar">
                 <div id="logo">
                     <svg width="22" height="22" viewbox="0 0 22 22" fill="none">
@@ -134,6 +144,7 @@
 
         <script src="js/leaflet.js"></script>
         <script src="js/config.js"></script>
+        <script src="js/proximity.js"></script>
         <script src="js/map.js"></script>
         <script src="js/alerts.js"></script>
     </body>
